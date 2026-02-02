@@ -1,7 +1,8 @@
 <Query Kind="Program">
   <Connection>
-    <ID>5369a8b5-dcd6-4128-b2f6-d33725f2277b</ID>
+    <ID>e0a87a77-277f-494c-93a7-51c2205344d2</ID>
     <NamingServiceVersion>2</NamingServiceVersion>
+    <Persist>true</Persist>
     <Server>.</Server>
     <AllowDateOnlyTimeOnly>true</AllowDateOnlyTimeOnly>
     <DeferDatabasePopulation>true</DeferDatabasePopulation>
@@ -11,6 +12,7 @@
     </DriverData>
   </Connection>
   <NuGetReference>BYSResults</NuGetReference>
+  <NuGetReference>Microsoft.EntityFrameworkCore</NuGetReference>
 </Query>
 
 // 	Lightweight result types for explicit success/failure 
@@ -24,7 +26,12 @@ using BYSResults;
 void Main()
 {
 	CodeBehind codeBehind = new CodeBehind(this); // “this” is LINQPad’s auto Context
-
+	#region Get Artist (GetArtist)
+	//	Fail
+	//	Rule:	artistID must be valid
+	codeBehind.GetArtist(0);
+	codeBehind.ErrorDetails.Dump("Artist ID must be valid");
+	#endregion
 }
 
 // ———— PART 2: Code Behind → Code Behind Method ————
@@ -52,7 +59,38 @@ public class CodeBehind(TypedDataContext context)
 	// general error message.
 	private string errorMessage = string.Empty;
 	#endregion
+	
+	//	artist view returned by the service.
+	//	using default! so we do not get a warning
+	public ArtistEditView Artist = default!;
 
+	public void GetArtist(int artistID)
+	{
+		//	clear previous error details and messages
+		errorDetails.Clear();
+		errorMessage = string.Empty;
+		feedbackMessage = string.Empty;
+
+		//	wrap the servlce call in a try/catch to handle
+		//	unexpected exceptions
+		try
+		{
+			var result = YourService.GetArtist(artistID);
+			if (result.IsSuccess)
+			{
+				Artist = result.Value;
+			}
+			else
+			{
+				errorDetails = GetErrorMessages(result.Errors.ToList());
+			}
+		}
+		catch(Exception ex)
+		{
+			//	capture any exception message for display
+			errorMessage = ex.Message;
+		}
+	}
 }
 #endregion
 
@@ -102,9 +140,9 @@ public class Library
 							ArtistID = a.ArtistId,
 							Name = a.Name
 						}).FirstOrDefault();
-						
+
 		//	if not artist were found with the artist id provided
-		if(artist == null)
+		if (artist == null)
 		{
 			result.AddError(new Error("No Artist", $"No artist was found with ID: {artistID}"));
 			//	need to exit because we will not be able to return a null artist
