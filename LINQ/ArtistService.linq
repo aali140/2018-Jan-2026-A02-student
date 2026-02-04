@@ -235,7 +235,7 @@ public class Library
 							Name	= a.Name
 						}).ToList();
 		//	if not artists were found with the artist id provided
-		if (artists == null)
+		if (artists.Count() == 0)
 		{
 			result.AddError(new Error("No Artists", $"No artist was found with name of '{artistName}'"));
 			//	need to exit because we will not be able to return a null artists
