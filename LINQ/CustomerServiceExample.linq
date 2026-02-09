@@ -2,7 +2,6 @@
   <Connection>
     <ID>65bbaa94-f03d-42a2-bf43-cbe67d7204a0</ID>
     <NamingServiceVersion>3</NamingServiceVersion>
-    <Persist>true</Persist>
     <Server>.</Server>
     <AllowDateOnlyTimeOnly>true</AllowDateOnlyTimeOnly>
     <UseMicrosoftDataSqlClient>true</UseMicrosoftDataSqlClient>
@@ -38,6 +37,18 @@ void Main()
 	//			(no customers with last name of 'zzz' and phone number of 999999)
 	codeBehind.GetCustomers("zzz", "999999");
 	codeBehind.ErrorDetails.Dump("No customer with last name of 'zzz' and phone number of 999999");
+	
+	//	Pass:	Both the last name and phone number is valid
+	codeBehind.GetCustomers("S", "558");
+	codeBehind.Customers.Dump("Pass - Valid last name and phone number");
+
+	//	Pass:	the last name is valid
+	codeBehind.GetCustomers("S", "");
+	codeBehind.Customers.Dump("Pass - Valid last name ");
+
+	//	Pass:	the phone number is valid
+	codeBehind.GetCustomers("", "558");
+	codeBehind.Customers.Dump("Pass - Valid phone number");
 
 }
 
@@ -165,8 +176,8 @@ public class Library
 								Email = c.Email,
 								StatusID = c.StatusID,
 								// if you have a nullable field, use the following pattern
-								//	TotalSales = c.Invoices.Sum(i => (decimal?)i.SubTotal + i.Tax) ?? 0
-								TotalSales = c.Invoices.Sum(i => i.SubTotal + i.Tax)
+								TotalSales = c.Invoices.Sum(i => (decimal?)i.SubTotal + i.Tax) ?? 0
+								// TotalSales = c.Invoices.Sum(i => i.SubTotal + i.Tax)
 							})
 							.OrderBy(c => c.LastName)
 							.ToList();
@@ -205,7 +216,7 @@ public class CustomerSearchView
 	//	status ID.	Status value will uswe a dropdown and a "LookupView" Model
 	public int StatusID { get; set; }
 	//	Invoice.SubTotal + Invoice.Tax
-	public decimal TotalSales { get; set; }
+	public decimal TotalSales { get; set; } = 0;
 }
 #endregion
 
