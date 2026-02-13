@@ -69,6 +69,7 @@ void Main()
 	codeBehind.ErrorDetails.Dump("Duplicated Customer");
 	#endregion
 
+	#region Add Customer
 	//	Pass:	Valid new customer
 	string firstName = GenerateName(6);
 	string lastName = GenerateName(9);
@@ -93,18 +94,36 @@ void Main()
 						.Select(l => l.LookupID).FirstOrDefault(),
 		RemoveFromViewFlag = false
 	};
-	
+
 	//	get the last two customer records to use as a comparison after we added the new records
-	Customers.OrderByDescending(c => c.CustomerID).Take(2).Dump();
-	
+	Customers.OrderByDescending(c => c.CustomerID).Take(2).Dump("Before Add");
+
 	//	add the new customer to the database
 	codeBehind.AddEditCustomer(customer);
 	codeBehind.Customer.Dump("New Customer");
 
 	//	get the last two customer records to see if the customer has been added
-	Customers.OrderByDescending(c => c.CustomerID).Take(2).Dump();
-	
+	Customers.OrderByDescending(c => c.CustomerID).Take(2).Dump("After Add");
+	#endregion
 
+	#region Edit Customer
+	//	get previous customer
+	customer = codeBehind.Customer;
+	customer.FirstName = GenerateName(6);
+	customer.LastName = GenerateName(9);
+	customer.Address1 = $"{GenerateName(14)} Avenue";
+
+	//	get the last two customer records to use as a comparison after we edited the previous record
+	Customers.OrderByDescending(c => c.CustomerID).Take(2).Dump("Before Edit");
+
+	//	update the database with the edited customer
+	codeBehind.AddEditCustomer(customer);
+	codeBehind.Customer.Dump("Edit Customer");
+
+	//	get the last two customer records to see if the customer has been edited
+	Customers.OrderByDescending(c => c.CustomerID).Take(2).Dump("After Edit");
+
+	#endregion
 	#endregion
 }
 
