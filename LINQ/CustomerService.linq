@@ -1,7 +1,7 @@
 <Query Kind="Program">
   <Connection>
-    <ID>9233bff9-8346-4983-884e-a6517dadc5d3</ID>
-    <NamingServiceVersion>3</NamingServiceVersion>
+    <ID>813ec320-8be0-4b91-8ec8-c1549d53aaea</ID>
+    <NamingServiceVersion>2</NamingServiceVersion>
     <Persist>true</Persist>
     <Driver Assembly="(internal)" PublicKeyToken="no-strong-name">LINQPad.Drivers.EFCore.DynamicDriver</Driver>
     <AllowDateOnlyTimeOnly>true</AllowDateOnlyTimeOnly>
@@ -29,22 +29,83 @@ void Main()
 {
 	CodeBehind codeBehind = new CodeBehind(this); // “this” is LINQPad’s auto Context
 	#region GetCustomer
-	//	Fail
-	//	rule:	customerID must be valid
-	codeBehind.GetCustomer(0);
-	codeBehind.ErrorDetails.Dump("Customer ID cannot be zero");
+	////	Fail
+	////	rule:	customerID must be valid
+	//codeBehind.GetCustomer(0);
+	//codeBehind.ErrorDetails.Dump("Customer ID cannot be zero");
 
-	//	rule:	customer id must be valid
-	codeBehind.GetCustomer(100000);
-	codeBehind.ErrorDetails.Dump("No customer was found for customer ID: 100000");
+	////	rule:	customer id must be valid
+	//codeBehind.GetCustomer(100000);
+	//codeBehind.ErrorDetails.Dump("No customer was found for customer ID: 100000");
 
-	//	Pass:	valid customer ID
-	codeBehind.GetCustomer(1);
-	codeBehind.Customer.Dump("Pass - Valid customer ID");
-
+	////	Pass:	valid customer ID
+	//codeBehind.GetCustomer(1);
+	//codeBehind.Customer.Dump("Pass - Valid customer ID");
 	#endregion
 
+	#region AddEditCustomer
+	#region Fail
+	//	Fail:
+	//	rule:	customer cannot be null
+	codeBehind.AddEditCustomer(null);
+	codeBehind.ErrorDetails.Dump("Customer is null");
 
+	//	need to create a customer view model object
+	CustomerEditView customer = new CustomerEditView();
+
+	//	rule:	first and last name, phone number and email are required (not empty)
+	codeBehind.AddEditCustomer(customer);
+	codeBehind.ErrorDetails.Dump("Missing required fields");
+
+	//	rule: first name, last name and phone number cannot be duplicated. Found more than once
+
+	//	get an existing customer from the database
+	codeBehind.GetCustomer(1);
+	customer = codeBehind.Customer;
+
+	//	reset the customer ID to zero so that it is consider a new customer
+	customer.CustomerID = 0;
+	codeBehind.AddEditCustomer(customer);
+	codeBehind.ErrorDetails.Dump("Duplicated Customer");
+	#endregion
+
+	//	Pass:	Valid new customer
+	string firstName = GenerateName(6);
+	string lastName = GenerateName(9);
+
+	//	minimum data required to create a new customer.
+	//	The lookup have been simpify and should have included the categoryName
+	customer = new CustomerEditView()
+	{
+		FirstName = firstName,
+		LastName = lastName,
+		Address1 = "My Street",
+		Address2 = "My Street 2",
+		City = "Edmonton",
+		ProvStateID = Lookups.Where(l => l.Name == "Alberta")
+						.Select(l => l.LookupID).FirstOrDefault(),
+		CountryID = Lookups.Where(l => l.Name == "Canada")
+						.Select(l => l.LookupID).FirstOrDefault(),
+		PostalCode = "T1C3T1",
+		Phone = "7805551212",
+		Email = $"{firstName}.{lastName}@bb.cc",
+		StatusID = Lookups.Where(l => l.Name == "Silver")
+						.Select(l => l.LookupID).FirstOrDefault(),
+		RemoveFromViewFlag = false
+	};
+	
+	//	get the last two customer records to use as a comparison after we added the new records
+	Customers.OrderByDescending(c => c.CustomerID).Take(2).Dump();
+	
+	//	add the new customer to the database
+	codeBehind.AddEditCustomer(customer);
+	codeBehind.Customer.Dump("New Customer");
+
+	//	get the last two customer records to see if the customer has been added
+	Customers.OrderByDescending(c => c.CustomerID).Take(2).Dump();
+	
+
+	#endregion
 }
 
 // ———— PART 2: Code Behind → Code Behind Method ————
@@ -247,6 +308,12 @@ public class Library
 									"Email is required"));
 		}
 
+		//	exit if we have any outstanding errors
+		if (result.IsFailure)
+		{
+			return result;
+		}
+
 		//	rule: first name, last name and phone number cannot be duplicated 
 		//			found more than once
 		if (editCustomer.CustomerID == 0)
@@ -284,7 +351,7 @@ public class Library
 		}
 
 		//	NOTE:	You do not have to update the primary key CustomerID
-		//				This is trye for all primary for any view model
+		//				This is true for all primary for any view model
 		//			-	If is it is a new customer, the customer ID will be "0"
 		//			- If it is an existing customer, there not need to update it as the 
 		//				entity has the primary key.
@@ -301,10 +368,10 @@ public class Library
 		customer.Email = editCustomer.Email;
 		customer.StatusID = editCustomer.StatusID;
 		customer.RemoveFromViewFlag = editCustomer.RemoveFromViewFlag;
-		
-		
+
+
 		//	new customer
-		if(customer.CustomerID == 0)
+		if (customer.CustomerID == 0)
 		{
 			_hogWildContext.Customers.Add(customer);
 		}
@@ -313,20 +380,20 @@ public class Library
 			//	existing customer
 			_hogWildContext.Customers.Update(customer);
 		}
-		
+
 		try
 		{
 			//	NOTE:	YOU CAN ONLY HAVE ONE SAVE CHANGES IN A METHOD!!!!
 			_hogWildContext.SaveChanges();
 		}
-		catch(Exception ex)
+		catch (Exception ex)
 		{
 			//	clear changes to maintain data integrity
 			_hogWildContext.ChangeTracker.Clear();
 			//	we do not have to throw an exception, just need to log the error message
 			return result.AddError(new Error("Error Saving Changes", ex.InnerException.Message));
 		}
-		
+
 		//	need to refresh the customer information
 		return GetCustomer(customer.CustomerID);
 	}
@@ -376,5 +443,41 @@ public static List<string> GetErrorMessages(List<Error> errorMessage)
 
 	// Return the populated list of error message strings
 	return errorList;
+}
+
+/// <summary>
+/// Generates a random name of a given length.
+/// The generated name follows a pattern of alternating consonants and vowels.
+/// </summary>
+/// <param name="len">The desired length of the generated name.</param>
+/// <returns>A random name of the specified length.</returns>
+public static string GenerateName(int len)
+{
+	// Create a new Random instance.
+	Random r = new Random();
+
+	// Define consonants and vowels to use in the name generation.
+	string[] consonants = { "b", "c", "d", "f", "g", "h", "j", "k", "l", "m", "l", "n", "p", "q", "r", "s", "sh", "zh", "t", "v", "w", "x" };
+	string[] vowels = { "a", "e", "i", "o", "u", "ae", "y" };
+
+	string Name = "";
+
+	// Start the name with an uppercase consonant and a vowel.
+	Name += consonants[r.Next(consonants.Length)].ToUpper();
+	Name += vowels[r.Next(vowels.Length)];
+
+	// Counter for tracking the number of characters added.
+	int b = 2;
+
+	// Add alternating consonants and vowels until we reach the desired length.
+	while (b < len)
+	{
+		Name += consonants[r.Next(consonants.Length)];
+		b++;
+		Name += vowels[r.Next(vowels.Length)];
+		b++;
+	}
+
+	return Name;
 }
 #endregion
