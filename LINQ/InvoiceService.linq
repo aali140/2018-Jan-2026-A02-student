@@ -36,14 +36,14 @@ void Main()
 
 	//  parts
 	bool getParts = false;
-	bool getPart = true;
+	bool getPart = false;
 
 
 	//  add invoice
 	bool addInvoice = false;
 
 	//	edit invoice
-	bool editInvoice = false;
+	bool editInvoice = true;
 
 	#region GetCustomerInvoice
 	if (getCustomerInvoice)
@@ -799,10 +799,10 @@ public class Library
 			invoice = new Invoice();
 			//	set the current date for the new invoice
 			invoice.InvoiceDate = DateOnly.FromDateTime(DateTime.Now);
+			invoice.CustomerID = invoiceView.CustomerID;
 		}
 
 		//	update the invoice properties from the view model
-		invoice.CustomerID = invoiceView.CustomerID;
 		invoice.EmployeeID = invoiceView.EmployeeID;
 		invoice.RemoveFromViewFlag = invoiceView.RemoveFromViewFlag;
 		//	reset the subtotal and tax as this will be updated from the invoices lines
@@ -814,7 +814,7 @@ public class Library
 		{
 			InvoiceLine invoiceLine = _hogWildContext.InvoiceLines
 										.Where(il => il.InvoiceLineID == invoiceLineView.InvoiceLineID
-													&& il.RemoveFromViewFlag != false)
+													&& il.RemoveFromViewFlag == false)
 										.Select(il => il).FirstOrDefault();
 
 			//	if the line item doesn't exist, initialize it
