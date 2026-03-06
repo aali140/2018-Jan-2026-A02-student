@@ -17,13 +17,13 @@ namespace HogWildApp.Components.Pages.SamplePages
         private bool noRecords;
 
         //  feedback message
-        private string feedbackMessaage = string.Empty;
+        private string feedbackMessage = string.Empty;
 
         //  error message
         private string errorMessage = string.Empty;
 
         //  has feedback
-        private bool hasFeedback => !string.IsNullOrWhiteSpace(feedbackMessaage);
+        private bool hasFeedback => !string.IsNullOrWhiteSpace(feedbackMessage);
 
         //  has error
         private bool hasError => !string.IsNullOrWhiteSpace(errorMessage) || errorDetails.Count > 0;
@@ -47,7 +47,29 @@ namespace HogWildApp.Components.Pages.SamplePages
         // search for an existing customers
         private void Search()
         {
+            //	clear previous error details and messages
+            errorDetails.Clear();
+            errorMessage = string.Empty;
+            feedbackMessage = string.Empty;
 
+            //	wrap the service call in a try/catch to handle unexpected exceptions
+            try
+            {
+                var result = CustomerService.GetCustomers(lastName, phoneNumber);
+                if (result.IsSuccess)
+                {
+                    Customers = result.Value;
+                }
+                else
+                {
+                    errorDetails = BlazorHelperClass.GetErrorMessages(result.Errors.ToList());
+                }
+            }
+            catch (Exception ex)
+            {
+                //	capture any exception message for display
+                errorMessage = ex.Message;
+            }
         }
 
         //  new customer
