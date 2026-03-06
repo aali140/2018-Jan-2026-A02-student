@@ -1,9 +1,6 @@
-﻿using HogWildSystem.DAL;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using BYSResults;
+using HogWildSystem.DAL;
+using HogWildSystem.ViewModels;
 
 namespace HogWildSystem.BLL
 {
@@ -21,6 +18,67 @@ namespace HogWildSystem.BLL
             //  initialize the _hogWildContext field with the provided
             //      HogWildContext instance
             _hogWildContext = hogWildContext;
+        }
+
+        // search for a customer based on last name and/or phone number
+        public Result<List<CustomerSearchView>> GetCustomers(string lastName, string phone)
+        {
+            //	Create a Result container that will hold either a 
+            //		CustomerSeearchView object(s) on success or anu accumulated errors on failure
+            var result = new Result<List<CustomerSearchView>>();
+
+            #region Business Rules
+            //	These are processing rules that need to be satisfied
+            //		for valid data
+
+            //	rule:	Both last name and phone number cannot be empty
+            //	rule:	RemoveFromViewFlag must be false (soft delete)
+
+            if (string.IsNullOrWhiteSpace(lastName) && string.IsNullOrWhiteSpace(phone))
+            {
+                //	need to exit because we have nothing to search on
+                return result.AddError(new Error("Missing Information",
+                            "Please provice either a last name and/or phone number"));
+            }
+            #endregion
+
+            //	filter rules
+            //	1)	only apply last name filter if supplied
+            //	2)	only apply phone filter if supplied
+            //	3)	always exclude removed records
+
+            var customers = _hogWildContext.Customers
+                                .Where(c => (string.IsNullOrWhiteSpace(lastName)
+                                        || c.LastName.ToUpper().Contains(lastName.ToUpper()))  // #1
+                                    && (string.IsNullOrWhiteSpace(phone)
+                                        || c.Phone.Contains(phone)) //  #2
+                                    && !c.RemoveFromViewFlag    //	#3
+                                    )
+                                .Select(c => new CustomerSearchView
+                                {
+                                    CustomerID = c.CustomerID,
+                                    FirstName = c.FirstName,
+                                    LastName = c.LastName,
+                                    City = c.City,
+                                    Phone = c.Phone,
+                                    Email = c.Email,
+                                    StatusID = c.StatusID,
+                                    // if you have a nullable field, use the following pattern
+                                    TotalSales = c.Invoices.Sum(i => (decimal?)i.SubTotal + i.Tax) ?? 0
+                                    // TotalSales = c.Invoices.Sum(i => i.SubTotal + i.Tax)
+                                })
+                                .OrderBy(c => c.LastName)
+                                .ToList();
+
+            //	if not customers were found with either the last name or phone number
+            if (customers == null || customers.Count() == 0)
+            {
+                //	need to exit because we did not find any customers
+                return result.AddError(new Error("No Customers", "No customers were found"));
+            }
+
+            //	return the result
+            return result.WithValue(customers);
         }
     }
 }
