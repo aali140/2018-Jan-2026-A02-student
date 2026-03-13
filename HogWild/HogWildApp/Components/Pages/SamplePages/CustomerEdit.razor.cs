@@ -11,7 +11,12 @@ namespace HogWildApp.Components.Pages.SamplePages
         #region Fields
         //  customer
         private CustomerEditView customer = new CustomerEditView();
-
+        //provinces
+        private List<LookupView> provinces = new();
+        //countries
+        private List<LookupView> countries = new();
+        //status lookup
+        private List<LookupView> statusLookup = new();
         //  mudform control
         private MudForm customerForm = new MudForm();
 
@@ -36,6 +41,10 @@ namespace HogWildApp.Components.Pages.SamplePages
         //  customer service
         [Inject]
         protected CustomerService? CustomerService { get; set; } = null;
+
+        //  category/lookup service
+        [Inject]
+        protected CategoryLookupService? CategoryLookupService { get; set; } = null;
 
         //  Customer ID used to create or edit a customer
         [Parameter]
@@ -72,6 +81,12 @@ namespace HogWildApp.Components.Pages.SamplePages
                 {
                     customer = new CustomerEditView();
                 }
+                // lookups
+                provinces = CategoryLookupService.GetLookupView("Province").Value;
+                countries = CategoryLookupService.GetLookupView("Country").Value;
+                statusLookup = CategoryLookupService.GetLookupView("Customer Status").Value;
+
+                //  update UI based on the data has changed
                 StateHasChanged();
             }
             catch (Exception ex)
