@@ -74,7 +74,7 @@ else
             <MudSelect @bind-Value="customer.ProvStateID"
                        Variant="Variant.Outlined"
                        Label="Province"
-                       Placeholder ="Please select a province"
+                       Placeholder="Please select a province"
                        Required="true"
                        RequiredError="You must select a Province">
                 @foreach (var item in provinces)
@@ -128,6 +128,19 @@ else
                     <MudSelectItem T="int?" Value="@item.LookupID">@item.Name</MudSelectItem>
                 }
             </MudSelect>
+        </MudItem>
+        <MudItem xs="12">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       OnClick="Save">
+                Save
+            </MudButton>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Error"
+                       OnClick="Cancel"
+                       Class="ml-4">
+                Cancel
+            </MudButton>
         </MudItem>
     </MudGrid>
 </MudForm>

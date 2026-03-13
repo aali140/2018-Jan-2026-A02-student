@@ -3,6 +3,7 @@ using HogWildSystem.ViewModels;
 using Microsoft.AspNetCore.Components;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using MudBlazor;
+using static MudBlazor.Icons;
 
 namespace HogWildApp.Components.Pages.SamplePages
 {
@@ -94,6 +95,41 @@ namespace HogWildApp.Components.Pages.SamplePages
                 //  capture any exception message for display
                 errorMessage = ex.Message;
             }
+        }
+
+        //  save the customer
+        private void Save()
+        {
+            //	clear previous error details and messages
+            errorDetails.Clear();
+            errorMessage = string.Empty;
+            feedbackMessage = string.Empty;
+
+            //	wrap the service call in a try/catch to handle unexpected exceptions
+            try
+            {
+                var result = CustomerService.AddEditCustomer(customer);
+                if (result.IsSuccess)
+                {
+                    customer = result.Value;
+                    feedbackMessage = "Data was successfully saved";
+                }
+                else
+                {
+                    errorDetails = BlazorHelperClass.GetErrorMessages(result.Errors.ToList());
+                }
+            }
+            catch (Exception ex)
+            {
+                // capture any exception message for display
+                errorMessage = ex.Message;
+            }
+        }
+
+        //  Cancels/close 
+        private void Cancel()
+        {
+
         }
 
         #endregion
