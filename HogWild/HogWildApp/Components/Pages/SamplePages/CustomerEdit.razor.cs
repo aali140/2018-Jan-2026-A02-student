@@ -61,7 +61,7 @@ namespace HogWildApp.Components.Pages.SamplePages
 
         #region Validation
         //  flag to check if the form is valid
-        private bool isFormValid;
+        private bool isFormValid =false;
         //  has the form changed (isDirty)
         private bool isDirty = false;
         //  set text for cancel/close button
@@ -170,14 +170,6 @@ namespace HogWildApp.Components.Pages.SamplePages
             }
             NavigationManager.NavigateTo("/SamplePages/CustomerList");
         }
-
-        //  Edit the invoice
-        private void EditInvoice(int invoiceID)
-        {
-            //  Note: we will hard code employee ID (1)
-            NavigationManager.NavigateTo($"/SamplePages/InvoiceEdit/{invoiceID}/{CustomerID}/1");
-        }
-
 
 
         private void OnFieldChanged()
